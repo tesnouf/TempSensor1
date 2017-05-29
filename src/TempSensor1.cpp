@@ -31,10 +31,7 @@
  * For more information, please visit:
  * http://www.mysensors.org/build/humidity
  *
- *
- * This is currently working on a test node - Sunfounder only, NOT working on the cheap EBAY ones yet???????
- *
- * Uploaded and running throug ATOM IDE
+
 
  */
 
@@ -59,12 +56,13 @@
 
 // Sleep time between sensor updates (in milliseconds)
 // Must be >1000ms for DHT22 and >2000ms for DHT11
-static const uint64_t UPDATE_INTERVAL = 2500;
+static const uint64_t UPDATE_INTERVAL = 3000;
 
 
 
 #define CHILD_ID_HUM 30
 #define CHILD_ID_TEMP 31
+#define LED_TESTING 5
 
 float lastTemp;
 float lastHum;
@@ -76,7 +74,7 @@ DHT dht;
 
 // Temp Light timer Variables
 unsigned long PreviousTempInterval = 0;
-const long ReadingInterval = 5000;
+const long ReadingInterval = 60000; // 60secs by default
 
 
 void presentation()
@@ -101,11 +99,20 @@ void setup()
   // Sleep for the time of the minimum sampling period to give the sensor time to power up
   // (otherwise, timeout errors might occure for the first reading)
   sleep(dht.getMinimumSamplingPeriod());
+
+  // Set up the LED for use cycle it on and off to ensure harware is working
+  // This occurs at effectively the same time the first message is being sent
+  pinMode(LED_TESTING, OUTPUT);
+  digitalWrite(LED_TESTING, HIGH);
+  delay(2000);
+  digitalWrite(LED_TESTING, LOW);
 }
 
 
 void loop()
 {
+// digitalWrite(LED_BUILTIN, LOW);
+// digitalWrite(LED_TESTING, LOW);
 unsigned long CurrentTempInterval = millis();
 if (CurrentTempInterval - PreviousTempInterval >= ReadingInterval){
   PreviousTempInterval = CurrentTempInterval;
@@ -120,6 +127,8 @@ if (CurrentTempInterval - PreviousTempInterval >= ReadingInterval){
     lastTemp = temperature;
     temperature += SENSOR_TEMP_OFFSET;
     send(msgTemp.set(temperature, 1));
+    // Add a LED to show when a message is being sent
+    // digitalWrite(LED_TESTING, LOW);
 
     #ifdef MY_DEBUG
     Serial.print("T: ");
@@ -139,6 +148,9 @@ if (CurrentTempInterval - PreviousTempInterval >= ReadingInterval){
     lastHum = humidity;
 
     send(msgHum.set(humidity, 1));
+
+    // Add a LED to show when a message is being sent
+    // digitalWrite(LED_BUILTIN, LOW);
 
     #ifdef MY_DEBUG
     Serial.print("H: ");
