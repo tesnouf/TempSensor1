@@ -35,7 +35,7 @@
  * This is currently working on a test node - Sunfounder only, NOT working on the cheap EBAY ones yet???????
  *
  * Uploaded and running throug ATOM IDE
- 
+
  */
 
 // Enable debug prints
@@ -61,19 +61,13 @@
 // Must be >1000ms for DHT22 and >2000ms for DHT11
 static const uint64_t UPDATE_INTERVAL = 2500;
 
-// Force sending an update of the temperature after n sensor reads, so a controller showing the
-// timestamp of the last update doesn't show something like 3 hours in the unlikely case, that
-// the value didn't change since;
-// i.e. the sensor would force sending an update every UPDATE_INTERVAL*FORCE_UPDATE_N_READS [ms]
-static const uint8_t FORCE_UPDATE_N_READS = 10;
+
 
 #define CHILD_ID_HUM 30
 #define CHILD_ID_TEMP 31
 
 float lastTemp;
 float lastHum;
-uint8_t nNoUpdatesTemp;
-uint8_t nNoUpdatesHum;
 bool metric = true;
 
 MyMessage msgHum(CHILD_ID_HUM, V_HUM);
@@ -82,7 +76,7 @@ DHT dht;
 
 // Temp Light timer Variables
 unsigned long PreviousTempInterval = 0;
-const long TempInterval = 5000;
+const long ReadingInterval = 5000;
 
 
 void presentation()
@@ -113,7 +107,7 @@ void setup()
 void loop()
 {
 unsigned long CurrentTempInterval = millis();
-if (CurrentTempInterval - PreviousTempInterval >= TempInterval){
+if (CurrentTempInterval - PreviousTempInterval >= ReadingInterval){
   PreviousTempInterval = CurrentTempInterval;
   // Force reading sensor, so it works also after sleep()
 //  dht.readSensor(true);
@@ -122,14 +116,8 @@ if (CurrentTempInterval - PreviousTempInterval >= TempInterval){
   float temperature = dht.getTemperature();
   if (isnan(temperature)) {
     Serial.println("Failed reading temperature from DHT!");
-  } else if (temperature != lastTemp || nNoUpdatesTemp == FORCE_UPDATE_N_READS) {
-    // Only send temperature if it changed since the last measurement or if we didn't send an update for n times
+  } else if (temperature != lastTemp){
     lastTemp = temperature;
-    if (!metric) {
-      temperature = dht.toFahrenheit(temperature);
-    }
-    // Reset no updates counter
-    nNoUpdatesTemp = 0;
     temperature += SENSOR_TEMP_OFFSET;
     send(msgTemp.set(temperature, 1));
 
@@ -139,18 +127,17 @@ if (CurrentTempInterval - PreviousTempInterval >= TempInterval){
     #endif
   } else {
     // Increase no update counter if the temperature stayed the same
-    nNoUpdatesTemp++;
+    Serial.print("Failed to Read Temperature");
   }
 
   // Get humidity from DHT library
   float humidity = dht.getHumidity();
   if (isnan(humidity)) {
     Serial.println("Failed reading humidity from DHT");
-  } else if (humidity != lastHum || nNoUpdatesHum == FORCE_UPDATE_N_READS) {
+  } else if (humidity != lastHum) {
     // Only send humidity if it changed since the last measurement or if we didn't send an update for n times
     lastHum = humidity;
-    // Reset no updates counter
-    nNoUpdatesHum = 0;
+
     send(msgHum.set(humidity, 1));
 
     #ifdef MY_DEBUG
@@ -159,7 +146,7 @@ if (CurrentTempInterval - PreviousTempInterval >= TempInterval){
     #endif
   } else {
     // Increase no update counter if the humidity stayed the same
-    nNoUpdatesHum++;
+    Serial.print("Failed to Read Humidity");
   }
 }
 
