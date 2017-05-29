@@ -1,1 +1,4 @@
-#### this project goal is to serve as a connection testing ground for boards and for initial GitHub fork structure testing
+Master is stable.
+
+Needs to be forked to be able to be a base sensor/actuator Node
+clean up code to remove the "Force Updates" portions
