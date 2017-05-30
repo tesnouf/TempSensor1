@@ -1,5 +1,3 @@
-#include <Arduino.h>
-
 /**
  * The MySensors Arduino library handles the wireless radio link and protocol
  * between your home built sensors/actuators and HA controller of choice.
@@ -44,10 +42,17 @@
 //#define MY_RADIO_RFM69
 //#define MY_RS485
 
+// Enable repeater functionality for this node
+#define MY_REPEATER_FEATURE
+
+// Include Libraries
 #include <SPI.h>
 #include <MySensors.h>
 #include <DHT.h>
+#include <Arduino.h>
 
+
+// Set a bunch of stuff for the DHT
 // Set this to the pin you connected the DHT's data pin to
 #define DHT_DATA_PIN 2
 
@@ -57,37 +62,45 @@
 // Sleep time between sensor updates (in milliseconds)
 // Must be >1000ms for DHT22 and >2000ms for DHT11
 static const uint64_t UPDATE_INTERVAL = 3000;
-
-
-
-#define CHILD_ID_HUM 30
-#define CHILD_ID_TEMP 31
-
-// Define the LED settings
-// Pin connected to
-#define LED_TESTING_PIN 5
-
 float lastTemp;
 float lastHum;
 bool metric = true;
-
-MyMessage msgHum(CHILD_ID_HUM, V_HUM);
-MyMessage msgTemp(CHILD_ID_TEMP, V_TEMP);
-DHT dht;
 
 // Temp Light timer Variables
 unsigned long PreviousTempInterval = 0;
 const long ReadingInterval = 60000; // 60secs by default
 
+// Define the LED settings
+// Pin connected to
+#define LED_TESTING_PIN 5
+#define RELAY_1  3  // Arduino Digital I/O pin number for first relay (second on pin+1 etc)
+#define NUMBER_OF_RELAYS 1 // Total number of attached relays
+#define RELAY_ON 1  // GPIO value to write to turn on attached relay
+#define RELAY_OFF 0 // GPIO value to write to turn off attached relay
+
+// A bunch of stuff for the Controller/Gateway
+#define CHILD_ID_HUM 30
+#define CHILD_ID_TEMP 31
+#define CHILD_ID_LED 32
+
+
+
+MyMessage msgHum(CHILD_ID_HUM, V_HUM);
+MyMessage msgTemp(CHILD_ID_TEMP, V_TEMP);
+DHT dht;
+
+
+
 
 void presentation()
 {
   // Send the sketch version information to the gateway
-  sendSketchInfo("TemperatureAndHumidity", "1.1");
+  sendSketchInfo("TemperatureAndHumidityLED", "1.1");
 
   // Register all sensors to gw (they will be created as child devices)
   present(CHILD_ID_HUM, S_HUM);
   present(CHILD_ID_TEMP, S_TEMP);
+  present(CHILD_ID_LED,S_BINARY);
 
   metric = getControllerConfig().isMetric;
 }
@@ -165,4 +178,13 @@ if (CurrentTempInterval - PreviousTempInterval >= ReadingInterval){
   }
 }
 
+}
+
+void receive(const MyMessage &message) {
+  // digitalWrite(message.LED_TESTING_PIN, message.getBool()?RELAY_ON:RELAY_OFF);
+  digitalWrite(LED_TESTING_PIN, message.getBool()?RELAY_ON:RELAY_OFF);
+  Serial.print("Incoming change for sensor:");
+  Serial.print(message.sensor);
+  Serial.print(", New status: ");
+  Serial.println(message.getBool());
 }
