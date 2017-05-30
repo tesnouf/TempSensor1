@@ -150,7 +150,10 @@ if (CurrentTempInterval - PreviousTempInterval >= ReadingInterval){
     Serial.print("T: ");
     Serial.println(temperature);
     #endif
-  } else {
+  } else if (temperature == lastTemp) {
+    Serial.print("Not updating the Temperature");
+  }
+  else {
     // Increase no update counter if the temperature stayed the same
     Serial.print("Failed to Read Temperature");
   }
@@ -172,7 +175,8 @@ if (CurrentTempInterval - PreviousTempInterval >= ReadingInterval){
     Serial.print("H: ");
     Serial.println(humidity);
     #endif
-  } else {
+  }
+  else {
     // Increase no update counter if the humidity stayed the same
     Serial.print("Failed to Read Humidity");
   }
