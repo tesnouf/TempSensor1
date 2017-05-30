@@ -119,9 +119,6 @@ void setup()
   // Set up the LED for use cycle it on and off to ensure harware is working
   // This occurs at effectively the same time the first message is being sent
   pinMode(LED_TESTING_PIN, OUTPUT);
-  digitalWrite(LED_TESTING_PIN, HIGH);
-  delay(2000);
-  digitalWrite(LED_TESTING_PIN, LOW);
 }
 
 
@@ -139,7 +136,7 @@ if (CurrentTempInterval - PreviousTempInterval >= ReadingInterval){
   float temperature = dht.getTemperature();
   if (isnan(temperature)) {
     Serial.println("Failed reading temperature from DHT!");
-  } else if (temperature != lastTemp){
+  } else {
     lastTemp = temperature;
     temperature += SENSOR_TEMP_OFFSET;
     send(msgTemp.set(temperature, 1));
@@ -150,13 +147,28 @@ if (CurrentTempInterval - PreviousTempInterval >= ReadingInterval){
     Serial.print("T: ");
     Serial.println(temperature);
     #endif
-  } else if (temperature == lastTemp) {
-    Serial.print("Not updating the Temperature");
   }
-  else {
-    // Increase no update counter if the temperature stayed the same
-    Serial.print("Failed to Read Temperature");
-  }
+
+  // if (isnan(temperature)) {
+  //   Serial.println("Failed reading temperature from DHT!");
+  // } else if (temperature != lastTemp){
+  //   lastTemp = temperature;
+  //   temperature += SENSOR_TEMP_OFFSET;
+  //   send(msgTemp.set(temperature, 1));
+  //   // Add a LED to show when a message is being sent
+  //   // digitalWrite(LED_TESTING, LOW);
+  //
+  //   #ifdef MY_DEBUG
+  //   Serial.print("T: ");
+  //   Serial.println(temperature);
+  //   #endif
+  // } else if (temperature == lastTemp) {
+  //   Serial.print("Not updating the Temperature");
+  // }
+  // else {
+  //   // Increase no update counter if the temperature stayed the same
+  //   Serial.print("Failed to Read Temperature");
+  // }
 
   // Get humidity from DHT library
   float humidity = dht.getHumidity();
