@@ -62,7 +62,10 @@ static const uint64_t UPDATE_INTERVAL = 3000;
 
 #define CHILD_ID_HUM 30
 #define CHILD_ID_TEMP 31
-#define LED_TESTING 5
+
+// Define the LED settings
+// Pin connected to
+#define LED_TESTING_PIN 5
 
 float lastTemp;
 float lastHum;
@@ -102,10 +105,10 @@ void setup()
 
   // Set up the LED for use cycle it on and off to ensure harware is working
   // This occurs at effectively the same time the first message is being sent
-  pinMode(LED_TESTING, OUTPUT);
-  digitalWrite(LED_TESTING, HIGH);
+  pinMode(LED_TESTING_PIN, OUTPUT);
+  digitalWrite(LED_TESTING_PIN, HIGH);
   delay(2000);
-  digitalWrite(LED_TESTING, LOW);
+  digitalWrite(LED_TESTING_PIN, LOW);
 }
 
 
