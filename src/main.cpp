@@ -149,35 +149,14 @@ if (CurrentTempInterval - PreviousTempInterval >= ReadingInterval){
     #endif
   }
 
-  // if (isnan(temperature)) {
-  //   Serial.println("Failed reading temperature from DHT!");
-  // } else if (temperature != lastTemp){
-  //   lastTemp = temperature;
-  //   temperature += SENSOR_TEMP_OFFSET;
-  //   send(msgTemp.set(temperature, 1));
-  //   // Add a LED to show when a message is being sent
-  //   // digitalWrite(LED_TESTING, LOW);
-  //
-  //   #ifdef MY_DEBUG
-  //   Serial.print("T: ");
-  //   Serial.println(temperature);
-  //   #endif
-  // } else if (temperature == lastTemp) {
-  //   Serial.print("Not updating the Temperature");
-  // }
-  // else {
-  //   // Increase no update counter if the temperature stayed the same
-  //   Serial.print("Failed to Read Temperature");
-  // }
 
   // Get humidity from DHT library
   float humidity = dht.getHumidity();
   if (isnan(humidity)) {
     Serial.println("Failed reading humidity from DHT");
-  } else if (humidity != lastHum) {
+  } else {
     // Only send humidity if it changed since the last measurement or if we didn't send an update for n times
     lastHum = humidity;
-
     send(msgHum.set(humidity, 1));
 
     // Add a LED to show when a message is being sent
@@ -187,10 +166,6 @@ if (CurrentTempInterval - PreviousTempInterval >= ReadingInterval){
     Serial.print("H: ");
     Serial.println(humidity);
     #endif
-  }
-  else {
-    // Increase no update counter if the humidity stayed the same
-    Serial.print("Failed to Read Humidity");
   }
 }
 
