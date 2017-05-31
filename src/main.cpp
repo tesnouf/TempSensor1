@@ -71,12 +71,20 @@ unsigned long PreviousTempInterval = 0;
 const long ReadingInterval = 60000; // 60secs by default
 
 // Define the LED settings
-// Pin connected to
-#define LED_TESTING_PIN 5
-#define RELAY_1  3  // Arduino Digital I/O pin number for first relay (second on pin+1 etc)
-#define NUMBER_OF_RELAYS 1 // Total number of attached relays
-#define RELAY_ON 1  // GPIO value to write to turn on attached relay
-#define RELAY_OFF 0 // GPIO value to write to turn off attached relay
+
+#define LED_PIN 5      // Arduino pin attached to MOSFET Gate pin
+#define FADE_DELAY 10  // Delay in ms for each percentage fade up/down (10ms = 1s full-range dim)
+
+static int16_t currentLevel = 0;  // Current dim level...
+MyMessage dimmerMsg(0, V_DIMMER);
+MyMessage lightMsg(0, V_LIGHT);
+
+// // Pin connected to
+// #define LED_TESTING_PIN 5
+// #define RELAY_1  3  // Arduino Digital I/O pin number for first relay (second on pin+1 etc)
+// #define NUMBER_OF_RELAYS 1 // Total number of attached relays
+// #define RELAY_ON 1  // GPIO value to write to turn on attached relay
+// #define RELAY_OFF 0 // GPIO value to write to turn off attached relay
 
 // A bunch of stuff for the Controller/Gateway
 #define CHILD_ID_HUM 30
@@ -100,7 +108,8 @@ void presentation()
   // Register all sensors to gw (they will be created as child devices)
   present(CHILD_ID_HUM, S_HUM);
   present(CHILD_ID_TEMP, S_TEMP);
-  present(CHILD_ID_LED,S_BINARY);
+  // present(CHILD_ID_LED,S_BINARY);
+  present( CHILD_ID_LED, V_DIMMER );
 
   metric = getControllerConfig().isMetric;
 }
@@ -118,7 +127,8 @@ void setup()
 
   // Set up the LED for use cycle it on and off to ensure harware is working
   // This occurs at effectively the same time the first message is being sent
-  pinMode(LED_TESTING_PIN, OUTPUT);
+  // pinMode(LED_TESTING_PIN, OUTPUT);
+  pinMode(LED_PIN, OUTPUT);
 }
 
 
@@ -171,11 +181,57 @@ if (CurrentTempInterval - PreviousTempInterval >= ReadingInterval){
 
 }
 
-void receive(const MyMessage &message) {
-  // digitalWrite(message.LED_TESTING_PIN, message.getBool()?RELAY_ON:RELAY_OFF);
-  digitalWrite(LED_TESTING_PIN, message.getBool()?RELAY_ON:RELAY_OFF);
-  Serial.print("Incoming change for sensor:");
-  Serial.print(message.sensor);
-  Serial.print(", New status: ");
-  Serial.println(message.getBool());
+// void receive(const MyMessage &message) {
+//   // digitalWrite(message.LED_TESTING_PIN, message.getBool()?RELAY_ON:RELAY_OFF);
+//   digitalWrite(LED_TESTING_PIN, message.getBool()?RELAY_ON:RELAY_OFF);
+//   Serial.print("Incoming change for sensor:");
+//   Serial.print(message.sensor);
+//   Serial.print(", New status: ");
+//   Serial.println(message.getBool());
+// }
+
+/***
+ *  This method provides a graceful fade up/down effect
+ */
+void fadeToLevel( int toLevel )
+{
+
+    int delta = ( toLevel - currentLevel ) < 0 ? -1 : 1;
+
+    while ( currentLevel != toLevel ) {
+        currentLevel += delta;
+        analogWrite( LED_PIN, (int)(currentLevel / 100. * 255) );
+        delay( FADE_DELAY );
+    }
+}
+
+void receive(const MyMessage &message)
+{
+    if (message.type == V_LIGHT || message.type == V_DIMMER) {
+
+        //  Retrieve the power or dim level from the incoming request message
+        int requestedLevel = atoi( message.data );
+
+        // Adjust incoming level if this is a V_LIGHT variable update [0 == off, 1 == on]
+        requestedLevel *= ( message.type == V_LIGHT ? 100 : 1 );
+
+        // Clip incoming level to valid range of 0 to 100
+        requestedLevel = requestedLevel > 100 ? 100 : requestedLevel;
+        requestedLevel = requestedLevel < 0   ? 0   : requestedLevel;
+
+        Serial.print( "Changing level to " );
+        Serial.print( requestedLevel );
+        Serial.print( ", from " );
+        Serial.println( currentLevel );
+
+        fadeToLevel( requestedLevel );
+
+        // Inform the gateway of the current DimmableLED's SwitchPower1 and LoadLevelStatus value...
+        send(lightMsg.set(currentLevel > 0));
+
+        // hek comment: Is this really nessesary?
+        send( dimmerMsg.set(currentLevel) );
+
+
+    }
 }
