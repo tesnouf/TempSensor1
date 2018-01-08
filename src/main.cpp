@@ -45,6 +45,9 @@ This update has been done as a test - TE
 //#define MY_RADIO_RFM69
 //#define MY_RS485
 
+#define MY_NODE_ID 2 //original node on breadborad
+#define MY_NODE_ID 3 //prototype
+
 // Enable repeater functionality for this node
 #define MY_REPEATER_FEATURE
 
@@ -90,9 +93,15 @@ MyMessage lightMsg(0, V_LIGHT);
 // #define RELAY_OFF 0 // GPIO value to write to turn off attached relay
 
 // A bunch of stuff for the Controller/Gateway
-#define CHILD_ID_HUM 30
-#define CHILD_ID_TEMP 31
-#define CHILD_ID_LED 32
+//prototype
+#define CHILD_ID_HUM 33
+#define CHILD_ID_TEMP 34
+#define CHILD_ID_LED 35
+
+//original node
+// #define CHILD_ID_HUM 30
+// #define CHILD_ID_TEMP 31
+// #define CHILD_ID_LED 32
 
 
 
@@ -112,7 +121,7 @@ void presentation()
   present(CHILD_ID_HUM, S_HUM);
   present(CHILD_ID_TEMP, S_TEMP);
   // present(CHILD_ID_LED,S_BINARY);
-  present( CHILD_ID_LED, V_DIMMER );
+  present(CHILD_ID_LED, V_DIMMER);
 
   metric = getControllerConfig().isMetric;
 }
