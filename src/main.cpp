@@ -46,7 +46,7 @@ This update has been done as a test - TE
 //#define MY_RS485
 
 #define MY_NODE_ID 2 //original node on breadborad
-#define MY_NODE_ID 3 //prototype
+// #define MY_NODE_ID 3 //prototype
 
 // Enable repeater functionality for this node
 #define MY_REPEATER_FEATURE
@@ -94,14 +94,14 @@ MyMessage lightMsg(0, V_LIGHT);
 
 // A bunch of stuff for the Controller/Gateway
 //prototype
-#define CHILD_ID_HUM 33
-#define CHILD_ID_TEMP 34
-#define CHILD_ID_LED 35
+// #define CHILD_ID_HUM 33
+// #define CHILD_ID_TEMP 34
+// #define CHILD_ID_LED 35
 
 //original node
-// #define CHILD_ID_HUM 30
-// #define CHILD_ID_TEMP 31
-// #define CHILD_ID_LED 32
+#define CHILD_ID_HUM 30
+#define CHILD_ID_TEMP 31
+#define CHILD_ID_LED 32
 
 
 
