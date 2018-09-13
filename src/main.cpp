@@ -36,9 +36,11 @@ This update has been done as a test - TE
 
  */
 
+
+
 // Enable debug prints
-#define MY_DEBUG
-//#define MY_DEBUG_VERBOSE_RF24
+// #define MY_DEBUG
+// #define MY_DEBUG_VERBOSE_RF24
 
 // Enable and select radio type attached
 #define MY_RADIO_NRF24
@@ -49,13 +51,15 @@ This update has been done as a test - TE
 // #define MY_NODE_ID 3 //prototype
 
 // Enable repeater functionality for this node
-#define MY_REPEATER_FEATURE
+// #define MY_REPEATER_FEATURE
 
 // Include Libraries
 #include <SPI.h>
 #include <MySensors.h>
 #include <DHT.h>
 #include <Arduino.h>
+#include <Bounce2.h>
+#include <Encoder.h>
 
 
 // Set a bunch of stuff for the DHT
@@ -80,17 +84,14 @@ const long ReadingInterval = 60000; // 60secs by default
 
 #define LED_PIN 5      // Arduino pin attached to MOSFET Gate pin
 #define FADE_DELAY 10  // Delay in ms for each percentage fade up/down (10ms = 1s full-range dim)
-
+#define KNOB_BUTTON_PIN 3   // Rotary encoder button pin
 static int16_t currentLevel = 0;  // Current dim level...
 MyMessage dimmerMsg(0, V_DIMMER);
 MyMessage lightMsg(0, V_LIGHT);
 
-// // Pin connected to
-// #define LED_TESTING_PIN 5
-// #define RELAY_1  3  // Arduino Digital I/O pin number for first relay (second on pin+1 etc)
-// #define NUMBER_OF_RELAYS 1 // Total number of attached relays
-// #define RELAY_ON 1  // GPIO value to write to turn on attached relay
-// #define RELAY_OFF 0 // GPIO value to write to turn off attached relay
+
+byte oldButtonVal;
+Bounce debouncer = Bounce();
 
 // A bunch of stuff for the Controller/Gateway
 //prototype
@@ -111,6 +112,29 @@ DHT dht;
 
 
 
+void setup()
+{
+  // Set knob button pin as input (with debounce)
+  pinMode(KNOB_BUTTON_PIN, INPUT);
+  digitalWrite(KNOB_BUTTON_PIN, HIGH);
+  debouncer.attach(KNOB_BUTTON_PIN);
+  debouncer.interval(5);
+  // oldButtonVal = debouncer.read();
+  oldButtonVal = 0; // not sure may switch it about
+  dht.setup(DHT_DATA_PIN); // set data pin of DHT sensor
+  // if (UPDATE_INTERVAL <= dht.getMinimumSamplingPeriod()) {
+  //   Serial.println("Warning: UPDATE_INTERVAL is smaller than supported by the sensor!");
+  // }
+  // Sleep for the time of the minimum sampling period to give the sensor time to power up
+  // (otherwise, timeout errors might occure for the first reading)
+  sleep(dht.getMinimumSamplingPeriod());
+
+  // Set up the LED for use cycle it on and off to ensure harware is working
+  // This occurs at effectively the same time the first message is being sent
+  // pinMode(LED_TESTING_PIN, OUTPUT);
+  pinMode(LED_PIN, OUTPUT);
+  Serial.println("Ready to receive messages...");
+}
 
 void presentation()
 {
@@ -126,26 +150,60 @@ void presentation()
   metric = getControllerConfig().isMetric;
 }
 
-
-void setup()
+/***
+ *  This method provides a graceful fade up/down effect
+ */
+void fadeToLevel( int toLevel )
 {
-  dht.setup(DHT_DATA_PIN); // set data pin of DHT sensor
-  if (UPDATE_INTERVAL <= dht.getMinimumSamplingPeriod()) {
-    Serial.println("Warning: UPDATE_INTERVAL is smaller than supported by the sensor!");
-  }
-  // Sleep for the time of the minimum sampling period to give the sensor time to power up
-  // (otherwise, timeout errors might occure for the first reading)
-  sleep(dht.getMinimumSamplingPeriod());
 
-  // Set up the LED for use cycle it on and off to ensure harware is working
-  // This occurs at effectively the same time the first message is being sent
-  // pinMode(LED_TESTING_PIN, OUTPUT);
-  pinMode(LED_PIN, OUTPUT);
+    int delta = ( toLevel - currentLevel ) < 0 ? -1 : 1;
+
+    while ( currentLevel != toLevel ) {
+        currentLevel += delta;
+        analogWrite( LED_PIN, (int)(currentLevel / 100. * 255) );
+        delay( FADE_DELAY );
+    }
 }
 
 
+void checkButtonClick() {
+  // Serial.println("Button Checked");
+// mostly working lots of radio interfernece and led turns off may need to add in a debounce delay to stop it picking up on the fall??
+  debouncer.update();
+  byte buttonVal = debouncer.read();
+  if (buttonVal == HIGH && currentLevel > 1) {
+    fadeToLevel( 0 );
+  }
+  if (buttonVal == HIGH && currentLevel == 0) {
+    fadeToLevel( 100 );
+  }
+    // Serial.println("Button Pressed");
+  //   if (currentLevel > 1) {
+  //     // current value is > 0 then 0
+  //
+  //     fadeToLevel( 0 );
+  //   } else { // 100
+  //
+  //     fadeToLevel( 100 );
+  //   }
+  // }
+
+  // if (buttonVal != oldButtonVal && buttonVal == LOW) {
+  //   #ifdef MY_DEBUG
+  //   Serial.println("Button Pressed");
+  //   Serial.print(buttonVal);
+  //   Serial.print(oldButtonVal);
+  //   #endif
+  // }
+  // oldButtonVal = buttonVal;
+
+}
+
 void loop()
 {
+// Check if someone has pressed the knob button
+checkButtonClick();
+
 // digitalWrite(LED_BUILTIN, LOW);
 // digitalWrite(LED_TESTING, LOW);
 unsigned long CurrentTempInterval = millis();
@@ -193,29 +251,12 @@ if (CurrentTempInterval - PreviousTempInterval >= ReadingInterval){
 
 }
 
-// void receive(const MyMessage &message) {
-//   // digitalWrite(message.LED_TESTING_PIN, message.getBool()?RELAY_ON:RELAY_OFF);
-//   digitalWrite(LED_TESTING_PIN, message.getBool()?RELAY_ON:RELAY_OFF);
-//   Serial.print("Incoming change for sensor:");
-//   Serial.print(message.sensor);
-//   Serial.print(", New status: ");
-//   Serial.println(message.getBool());
-// }
 
-/***
- *  This method provides a graceful fade up/down effect
- */
-void fadeToLevel( int toLevel )
-{
 
-    int delta = ( toLevel - currentLevel ) < 0 ? -1 : 1;
 
-    while ( currentLevel != toLevel ) {
-        currentLevel += delta;
-        analogWrite( LED_PIN, (int)(currentLevel / 100. * 255) );
-        delay( FADE_DELAY );
-    }
-}
+
+
+
 
 void receive(const MyMessage &message)
 {
