@@ -139,6 +139,7 @@ void setup()
 void presentation()
 {
   // Send the sketch version information to the gateway
+  // Adding a line
   sendSketchInfo("TemperatureAndHumidityLED", "1.1");
 
   // Register all sensors to gw (they will be created as child devices)
