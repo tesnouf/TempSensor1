@@ -47,8 +47,8 @@ This update has been done as a test - TE
 //#define MY_RADIO_RFM69
 //#define MY_RS485
 
-#define MY_NODE_ID 2 //original node on breadborad
-// #define MY_NODE_ID 3 //prototype
+// #define MY_NODE_ID 2 //original node on breadborad
+#define MY_NODE_ID 3 //prototype
 
 // Enable repeater functionality for this node
 // #define MY_REPEATER_FEATURE
@@ -85,7 +85,7 @@ const long ReadingInterval = 60000; // 60secs by default
 #define LED_PIN 5      // Arduino pin attached to MOSFET Gate pin
 #define FADE_DELAY 10  // Delay in ms for each percentage fade up/down (10ms = 1s full-range dim)
 #define KNOB_BUTTON_PIN 3   // Rotary encoder button pin
-static int16_t currentLevel = 0;  // Current dim level...
+static int16_t currentLevel = 50;  // Current dim level...
 MyMessage dimmerMsg(0, V_DIMMER);
 MyMessage lightMsg(0, V_LIGHT);
 
@@ -95,14 +95,14 @@ Bounce debouncer = Bounce();
 
 // A bunch of stuff for the Controller/Gateway
 //prototype
-// #define CHILD_ID_HUM 33
-// #define CHILD_ID_TEMP 34
-// #define CHILD_ID_LED 35
+#define CHILD_ID_HUM 33
+#define CHILD_ID_TEMP 34
+#define CHILD_ID_LED 35
 
-//original node
-#define CHILD_ID_HUM 30
-#define CHILD_ID_TEMP 31
-#define CHILD_ID_LED 32
+// //original node
+// #define CHILD_ID_HUM 30
+// #define CHILD_ID_TEMP 31
+// #define CHILD_ID_LED 32
 
 
 
